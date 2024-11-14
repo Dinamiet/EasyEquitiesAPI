@@ -16,15 +16,15 @@ class EasyEquities:
 				f"UserIdentifier={user}&Password={pw}"
 				"&ReturnUrl=&OneSignalGameId=&IsUsingNewLayoutSatrixOrEasyEquitiesMobileApp=False"
 		)
-		session.headers["Accept"] = (
+		self.session.headers["Accept"] = (
 			"text/html,application/xhtml+xml,"
 			"application/xml;q=0.9,image/webp,*/*;q=0.8"
 		)
-		session.headers["Connection"] = "keep-alive"
-		session.headers["Connection-Type"] = "application/x-www-form-urlencoded"
-		session.headers["Content-Type"] = "application/x-www-form-urlencoded"
+		self.session.headers["Connection"] = "keep-alive"
+		self.session.headers["Connection-Type"] = "application/x-www-form-urlencoded"
+		self.session.headers["Content-Type"] = "application/x-www-form-urlencoded"
 
-		response = session.post(
+		response = self.session.post(
 			url=self.baseURL + "/Account/SignIn",
 			data=data,
 			allow_redirects=False
