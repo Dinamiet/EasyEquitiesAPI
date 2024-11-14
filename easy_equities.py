@@ -37,7 +37,7 @@ class EasyEquities:
 
 	def switchAccount(self, accountID):
 		if (self.currentAccount == accountID):
-			return
+			return True
 
 		data = {"trustAccountId": accountID}
 		response = self.session.post(
@@ -46,12 +46,14 @@ class EasyEquities:
 		)
 		if (response.status_code != 200):
 			print("Could not select account", accountID)
-			return
+			return False
 
 		self.currentAccount = accountID
+		return True
 
 	def getHoldings(self, accountID):
-		self.switchAccount(accountID)
+		if not self.switchAccount(accountID):
+			return []
 
 		# Get holdings
 		response = self.session.get(url=self.baseURL + "/AccountOverview/GetHoldingsView")
@@ -84,7 +86,8 @@ class EasyEquities:
 		return holdings
 
 	def getBalance(self, accountID):
-		self.switchAccount(accountID)
+		if not self.switchAccount(accountID):
+			return 0;
 
 		# Get balance
 		response = self.session.get(url= self.baseURL + "/AccountOverview")
@@ -101,7 +104,8 @@ class EasyEquities:
 		return availableFunds
 
 	def buy(self, accountID, holding, value):
-		self.switchAccount(accountID)
+		if not self.switchAccount(accountID):
+			return False
 
 		# Get holding page
 		response = self.session.get(url= self.baseURL + "/ValueAllocation/Buy?contractCode=" + holding)
