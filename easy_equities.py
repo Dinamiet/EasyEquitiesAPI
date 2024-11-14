@@ -104,7 +104,7 @@ class EasyEquities:
 		availableFunds = float(text[1:].replace(" ", ""))
 		return availableFunds
 
-	def buy(accountID, holding, value):
+	def buy(self, accountID, holding, value):
 		self.switchAccount(accountID)
 
 		# Get holding page
@@ -142,7 +142,7 @@ class EasyEquities:
 
 		return True
 
-	def transfer(fromAccount, toAccount, fromAmount):
+	def transfer(self, fromAccount, toAccount, fromAmount):
 		# Get Transfer page
 		response = self.session.get(url= self.baseURL +  "/FundTransfer/Transfer")
 		response.raise_for_status()
