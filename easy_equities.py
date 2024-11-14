@@ -29,7 +29,6 @@ class EasyEquities:
 			data=data,
 			allow_redirects=False
 		)
-		response.raise_for_status()
 		if (response.status_code != 302):
 			print("Login Failed")
 			return False
@@ -45,7 +44,6 @@ class EasyEquities:
 			url=self.baseURL + "/Menu/UpdateCurrency",
 			data=data
 		)
-		response.raise_for_status()
 		if (response.status_code != 200):
 			print("Could not select account", accountID)
 			return
@@ -57,7 +55,6 @@ class EasyEquities:
 
 		# Get holdings
 		response = self.session.get(url=self.baseURL + "/AccountOverview/GetHoldingsView")
-		response.raise_for_status()
 		if (response.status_code != 200):
 			print("Could not get holdings")
 			return []
@@ -91,7 +88,6 @@ class EasyEquities:
 
 		# Get balance
 		response = self.session.get(url= self.baseURL + "/AccountOverview")
-		response.raise_for_status()
 		if (response.status_code != 200):
 			print("Could not get Account overview")
 			return 0
@@ -109,7 +105,6 @@ class EasyEquities:
 
 		# Get holding page
 		response = self.session.get(url= self.baseURL + "/ValueAllocation/Buy?contractCode=" + holding)
-		response.raise_for_status()
 		if (response.status_code != 200):
 			print("Could not get Buy page")
 			return False
@@ -135,7 +130,6 @@ class EasyEquities:
 			url= self.baseURL+action,
 			data=postData
 		)
-		response.raise_for_status()
 		if (response.status_code != 200):
 			print("Could not place order")
 			return False
@@ -145,7 +139,6 @@ class EasyEquities:
 	def transfer(self, fromAccount, toAccount, fromAmount):
 		# Get Transfer page
 		response = self.session.get(url= self.baseURL +  "/FundTransfer/Transfer")
-		response.raise_for_status()
 		if (response.status_code != 200):
 			print("Could not get Transfer page")
 			return False
