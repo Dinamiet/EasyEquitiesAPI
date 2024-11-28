@@ -103,7 +103,7 @@ class EasyEquities:
 		availableFunds = float(text[1:].replace(" ", ""))
 		return availableFunds
 
-	def buy(self, accountID, holding, value):
+	def buy(self, accountID, holding, amount):
 		if not self.switchAccount(accountID):
 			return False
 
