@@ -27,9 +27,8 @@ class EasyEquities:
 		response = self.session.post(
 			url=self.baseURL + "/Account/SignIn",
 			data=data,
-			allow_redirects=False
 		)
-		if (response.status_code != 302):
+		if response.status_code != 200:
 			print("Login Failed")
 			return False
 
