@@ -159,5 +159,17 @@ class EasyEquities:
 				value = formInput.attrs["value"]
 				postData[name] = value
 
-		print(postData)
-		return False
+		postData['TransferAmount'] = fromAmount
+		postData['SourceTrustAccountId'] = fromAccount
+		postData['DestinationTrustAccountId'] = toAccount
+		postData['ConfirmAgreement'] = 'true'
+
+		response = self.session.post(
+			url= self.baseURL+action,
+			data=postData
+		)
+		if (response.status_code != 200):
+			print("Could not transfer funds")
+			return False
+
+		return True
