@@ -27,6 +27,35 @@ class EasyEquities {
 		await this.browser.close();
 		this.browser = null;
 	}
+
+	async Login() {
+		await this.Initialize();
+		const page = await this.browser.newPage();
+
+		await page.goto('https://platform.easyequities.io/Account/SignIn');
+
+		await page.waitForSelector("form#loginForm");
+
+		await page.waitForSelector("input#user-identifier-input");
+		await page.type("input#user-identifier-input", this.authentication.username);
+
+		await page.waitForSelector("input#Password");
+		await page.type("input#Password", this.authentication.password);
+
+		const loginUrl = page.url();
+
+		await page.click("button#SignIn");
+
+		await page.waitForNavigation({ waitUntil: 'networkidle0' });
+
+		const newUrl = page.url();
+
+		if (newUrl.startsWith(loginUrl)) {
+			return false;
+		}
+
+		return true;
+	}
 };
 
 module.exports = EasyEquities;
