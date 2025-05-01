@@ -126,6 +126,24 @@ class EasyEquities {
 		page.close();
 		return holdings;
 	}
+
+	async GetBalance(accountID) {
+		await this.Initialize();
+		const page = await this.browser.newPage();
+
+		await page.goto("https://platform.easyequities.io/AccountOverview");
+
+		const accountTab = `div[data-id='${accountID}']`;
+		await page.waitForSelector(accountTab);
+		await page.click(accountTab);
+		await page.waitForNavigation({ waitUntil: 'networkidle0' });
+
+		const availableFundsSelector = `div[data-id='${accountID}'] > div.funds-to-invest`;
+		await page.waitForSelector(availableFundsSelector);
+		const availableFunds = await page.$eval(availableFundsSelector, element => element.textContent);
+
+		return extractNumber(availableFunds);
+	}
 };
 
 module.exports = EasyEquities;
