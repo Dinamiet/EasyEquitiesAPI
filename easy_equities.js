@@ -177,6 +177,53 @@ class EasyEquities {
 		page.close();
 		return newUrl.includes("BuyInstruction");
 	}
+
+	async Transfer(fromAccount, toAccount, fromAmount) {
+		await this.Initialize();
+		const page = await this.browser.newPage();
+
+		await page.goto("https://platform.easyequities.io/FundTransfer/Transfer");
+
+		await page.waitForNetworkIdle();
+
+		const sourceSelector = "select#SourceTrustAccountId";
+		await page.waitForSelector(sourceSelector);
+		await page.select(sourceSelector, fromAccount);
+
+		await page.waitForNetworkIdle();
+
+		const destinationSelector = "select#DestinationTrustAccountId";
+		await page.waitForSelector(destinationSelector);
+		await page.select(destinationSelector, toAccount);
+
+		await page.waitForNetworkIdle();
+
+		const transferAmountSelector = "input#TransferAmount";
+		await page.waitForSelector(transferAmountSelector);
+		await page.type(transferAmountSelector, fromAmount.toString());
+
+		await page.waitForNetworkIdle();
+
+		const agreementSelector = "input#Agreements_0__Checked";
+		await page.waitForSelector(agreementSelector);
+		await page.click(agreementSelector);
+
+		await page.waitForNetworkIdle();
+
+		const transferButtonSelector = "button[type='submit']";
+		await page.waitForSelector(transferButtonSelector);
+		await page.click(transferButtonSelector);
+
+		try {
+			await page.waitForNavigation({ waitUntil: 'networkidle0' });
+		} catch (error) {
+			return false;
+		}
+
+		const newUrl = page.url();
+		page.close();
+		return newUrl.includes("successfully");
+	}
 };
 
 module.exports = EasyEquities;
