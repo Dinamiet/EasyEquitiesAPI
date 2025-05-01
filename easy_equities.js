@@ -82,7 +82,7 @@ class EasyEquities {
 		const accountTab = `div[data-id='${accountID}']`;
 		await page.waitForSelector(accountTab);
 		await page.click(accountTab);
-		await page.waitForNavigation({ waitUntil: 'networkidle0' });
+		await page.waitForNetworkIdle();
 
 		await page.waitForSelector("button#loadHoldings");
 		await page.click("button#loadHoldings");
@@ -136,7 +136,7 @@ class EasyEquities {
 		const accountTab = `div[data-id='${accountID}']`;
 		await page.waitForSelector(accountTab);
 		await page.click(accountTab);
-		await page.waitForNavigation({ waitUntil: 'networkidle0' });
+		await page.waitForNetworkIdle();
 
 		const availableFundsSelector = `div[data-id='${accountID}'] > div.funds-to-invest`;
 		await page.waitForSelector(availableFundsSelector);
@@ -155,7 +155,7 @@ class EasyEquities {
 		const accountTab = `div[data-id='${accountID}']`;
 		await page.waitForSelector(accountTab);
 		await page.click(accountTab);
-		await page.waitForNavigation({ waitUntil: 'networkidle0' });
+		await page.waitForNetworkIdle();
 
 		await page.goto("https://platform.easyequities.io/ValueAllocation/Buy?contractCode=" + holding);
 
