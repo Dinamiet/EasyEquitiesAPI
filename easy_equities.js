@@ -100,7 +100,6 @@ class EasyEquities {
 			const purchaseCellSelector = "div.purchase-value-cell > span";
 			const currentCellSelector = "div.current-value-cell > span";
 			const tableRowSelector = "div.content-box-description > div.row > div > div.content-box > div.row"
-			const tableRowTitleSelector = tableRowSelector + " >  div.text-align-left";
 			const tableRowValueSelector = tableRowSelector + " >  div.bold-heavy";
 
 			// Expand for more information
@@ -111,7 +110,6 @@ class EasyEquities {
 			const holdingValue = await tableDisplay.$eval(holdingCellSelector, element => element.getAttribute('src'));
 			const purchaseValue = await tableDisplay.$eval(purchaseCellSelector, element => element.textContent);
 			const currentValue = await tableDisplay.$eval(currentCellSelector, element => element.textContent);
-			const tableTitles = await tableDisplay.$$eval(tableRowTitleSelector, elements => elements.map(element => element.textContent));
 			const tableValues = await tableDisplay.$$eval(tableRowValueSelector, elements => elements.map(element => element.textContent));
 
 			const info = {
