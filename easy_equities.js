@@ -7,7 +7,7 @@ const extractNumber = (currencyString) => {
 	// - An optional minus sign at the beginning: -?
 	// - One or more digits: \d+
 	// - An optional decimal part: (\.\d+)?
-	const floatRegex = /-?\d+(\s+\d+)?(\.\d+)?/;
+	const floatRegex = /-?\.?\d+(\s+\d+)?(\.\d+)?/;
 
 	const match = currencyString.match(floatRegex);
 
@@ -87,28 +87,46 @@ class EasyEquities {
 		await page.waitForSelector("button#loadHoldings");
 		await page.click("button#loadHoldings");
 
-		const holdingCellSelector = "div.img-stocks-container > img";
-		const purchaseCellSelector = "div.purchase-value-cell > span";
-		const currentCellSelector = "div.current-value-cell > span";
+		const tableDisplaySelector = "div.table-display > div#holding-body-table-positioning";
+		await page.waitForSelector(tableDisplaySelector);
 
-		await page.waitForSelector(holdingCellSelector);
-		await page.waitForSelector(purchaseCellSelector);
-		await page.waitForSelector(currentCellSelector);
+		const tableDisplays = await page.$$(tableDisplaySelector);
 
-		const [holdings, purchases, currents] = await Promise.all([
-			page.$$eval(holdingCellSelector, elements => elements.map(element => element.getAttribute('src'))),
-			page.$$eval(purchaseCellSelector, elements => elements.map(element => element.textContent)),
-			page.$$eval(currentCellSelector, elements => elements.map(element => element.textContent)),
-		]);
+		const holdings = [];
 
-		const info = holdings.map((symbol, index) => ({
-			symbol: path.basename(symbol).split('.')[2],
-			purchase: extractNumber(purchases[index]),
-			current: extractNumber(currents[index]),
-		}));
+		for (const tableDisplay of tableDisplays) {
+
+			const holdingCellSelector = "div.img-stocks-container > img";
+			const purchaseCellSelector = "div.purchase-value-cell > span";
+			const currentCellSelector = "div.current-value-cell > span";
+			const tableRowSelector = "div.content-box-description > div.row > div > div.content-box > div.row"
+			const tableRowTitleSelector = tableRowSelector + " >  div.text-align-left";
+			const tableRowValueSelector = tableRowSelector + " >  div.bold-heavy";
+
+			// Expand for more information
+			tableDisplay.click();
+			const tableRowContentSelector = "div.content-box-description > div.row > div > div.content-box > div.row";
+			await tableDisplay.waitForSelector(tableRowContentSelector);
+
+			const holdingValue = await tableDisplay.$eval(holdingCellSelector, element => element.getAttribute('src'));
+			const purchaseValue = await tableDisplay.$eval(purchaseCellSelector, element => element.textContent);
+			const currentValue = await tableDisplay.$eval(currentCellSelector, element => element.textContent);
+			const tableTitles = await tableDisplay.$$eval(tableRowTitleSelector, elements => elements.map(element => element.textContent));
+			const tableValues = await tableDisplay.$$eval(tableRowValueSelector, elements => elements.map(element => element.textContent));
+
+			const info = {
+				symbol: path.basename(holdingValue).split('.')[2],
+				purchaseValue: extractNumber(purchaseValue),
+				currentValue: extractNumber(currentValue),
+				shares: extractNumber(tableValues[0]) + extractNumber(tableValues[1]),
+				avgPurchasePrice: extractNumber(tableValues[2]),
+			};
+
+			holdings.push(info);
+		}
 
 		page.close();
-		return info;
+		return holdings;
 	}
 };
 
