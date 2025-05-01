@@ -22,8 +22,8 @@ class EasyEquities {
 	constructor(username, password) {
 		this.authentication = { username: username, password: password };
 		this.options = {
-			headless: false,
-			devtools: true,
+			headless: true,
+			devtools: false,
 		};
 		this.browser = null;
 	}
