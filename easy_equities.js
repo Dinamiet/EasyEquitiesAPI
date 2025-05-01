@@ -142,7 +142,40 @@ class EasyEquities {
 		await page.waitForSelector(availableFundsSelector);
 		const availableFunds = await page.$eval(availableFundsSelector, element => element.textContent);
 
+		page.close();
 		return extractNumber(availableFunds);
+	}
+
+	async Buy(accountID, holding, amount) {
+		await this.Initialize();
+		const page = await this.browser.newPage();
+
+		await page.goto("https://platform.easyequities.io/AccountOverview");
+
+		const accountTab = `div[data-id='${accountID}']`;
+		await page.waitForSelector(accountTab);
+		await page.click(accountTab);
+		await page.waitForNavigation({ waitUntil: 'networkidle0' });
+
+		await page.goto("https://platform.easyequities.io/ValueAllocation/Buy?contractCode=" + holding);
+
+		const amountInputSelector = "input#js-value-amount";
+		await page.waitForSelector(amountInputSelector);
+		await page.type(amountInputSelector, amount.toString());
+
+		const performTradeSelector = "div[data-bind*=performTradeOperation]";
+		await page.waitForSelector(performTradeSelector);
+
+		await page.click(performTradeSelector);
+		await page.waitForNetworkIdle();
+		await page.waitForSelector(performTradeSelector);
+		await page.click(performTradeSelector);
+
+		await page.waitForNavigation({ waitUntil: 'networkidle0' });
+		const newUrl = page.url();
+
+		page.close();
+		return newUrl.includes("BuyInstruction");
 	}
 };
 
