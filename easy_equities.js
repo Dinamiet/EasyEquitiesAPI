@@ -210,6 +210,12 @@ class EasyEquities {
 				await page.click(accountTab);
 				await page.waitForLoadState('load');
 
+				const currentAccountSelector = "h3 > span.bold-heavy";
+				await page.waitForSelector(currentAccountSelector);
+				const selectedAccount = await page.$eval(currentAccountSelector, element => element.textContent);
+				if (!selectedAccount.includes(accountID))
+					continue;
+
 				await page.goto("https://platform.easyequities.io/ValueAllocation/Buy?contractCode=" + holding);
 				await page.waitForLoadState('load');
 
