@@ -85,7 +85,7 @@ class EasyEquities {
 				retries--;
 				console.log("Something went wrong, retrying...");
 				if (retries === 0)
-					throw new Error(`Failed to get balance after ${this.maxRetries} retries`);
+					throw new Error(`Failed to get login after ${this.maxRetries} retries: ${error.message}`);
 			}
 		}
 	}
@@ -148,7 +148,7 @@ class EasyEquities {
 				retries--;
 				console.log("Something went wrong, retrying...");
 				if (retries === 0)
-					throw new Error(`Failed to get balance after ${this.maxRetries} retries`);
+					throw new Error(`Failed to get holdings for ${accountID} after ${this.maxRetries} retries: ${error.message}`);
 			}
 		}
 	}
@@ -177,7 +177,7 @@ class EasyEquities {
 				retries--;
 				console.log("Something went wrong, retrying...");
 				if (retries === 0)
-					throw new Error(`Failed to get balance after ${this.maxRetries} retries`);
+					throw new Error(`Failed to get balance of ${accountID} after ${this.maxRetries} retries: ${error.message}`);
 			}
 		}
 	}
@@ -222,7 +222,7 @@ class EasyEquities {
 				retries--;
 				console.log("Something went wrong, retrying...");
 				if (retries === 0)
-					throw new Error(`Failed to get balance after ${this.maxRetries} retries`);
+					throw new Error(`Failed to buy ${holding} after ${this.maxRetries} retries: ${error.message}`);
 			}
 		}
 	}
@@ -279,7 +279,7 @@ class EasyEquities {
 				retries--;
 				console.log("Something went wrong, retrying...");
 				if (retries === 0)
-					throw new Error(`Failed to get balance after ${this.maxRetries} retries`);
+					throw new Error(`Failed to get transfer ${fromAmount} from account ${fromAccount} to account ${toAccount} after ${this.maxRetries} retries: ${error.message}`);
 			}
 		}
 	}
