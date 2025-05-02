@@ -10,4 +10,8 @@ Web scraper for the EasyEquities platform.
 
 ## Installation
 
+Install node dependencies and packages:
 > npm i
+
+Download Playwright webdrivers:
+> npx playwright install firefox
