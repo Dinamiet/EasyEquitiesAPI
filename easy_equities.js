@@ -180,8 +180,7 @@ class EasyEquities {
 					continue;
 
 				const availableFundsSelector = `div[data-id='${accountID}'] > div.funds-to-invest`;
-				await page.waitForSelector(availableFundsSelector);
-				const availableFunds = await page.$eval(availableFundsSelector, element => element.textContent);
+				const availableFunds = await page.locator(availableFundsSelector).textContent();
 
 				page.close();
 				return extractNumber(availableFunds);
