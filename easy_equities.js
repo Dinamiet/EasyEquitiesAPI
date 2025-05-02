@@ -104,6 +104,12 @@ class EasyEquities {
 				await page.click(`div[data-id='${accountID}']`);
 				await page.waitForLoadState('load');
 
+				const currentAccountSelector = "h3 > span.bold-heavy";
+				await page.waitForSelector(currentAccountSelector);
+				const selectedAccount = await page.$eval(currentAccountSelector, element => element.textContent);
+				if (!selectedAccount.includes(accountID))
+					continue;
+
 				await page.locator("button#loadHoldings").click();
 
 				const tableDisplaySelector = "div.table-display > div#holding-body-table-positioning";
@@ -166,6 +172,12 @@ class EasyEquities {
 
 				await page.click(`div[data-id='${accountID}']`);
 				await page.waitForLoadState('load');
+
+				const currentAccountSelector = "h3 > span.bold-heavy";
+				await page.waitForSelector(currentAccountSelector);
+				const selectedAccount = await page.$eval(currentAccountSelector, element => element.textContent);
+				if (!selectedAccount.includes(accountID))
+					continue;
 
 				const availableFundsSelector = `div[data-id='${accountID}'] > div.funds-to-invest`;
 				await page.waitForSelector(availableFundsSelector);
