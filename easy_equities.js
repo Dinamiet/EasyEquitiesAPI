@@ -1,4 +1,4 @@
-const puppeteer = require('puppeteer');
+const playwright = require('playwright');
 const path = require('path');
 
 const extractNumber = (currencyString) => {
@@ -31,7 +31,8 @@ class EasyEquities {
 	async Initialize() {
 		if (this.browser === null) {
 			try {
-				this.browser = await puppeteer.launch(this.options);
+				this.browser = await playwright.firefox.launch(this.options);
+				this.context = await this.browser.newContext();
 			} catch (error) {
 				console.error("Error initializing browser: " + error);
 			}
@@ -39,33 +40,37 @@ class EasyEquities {
 	}
 
 	async Close() {
-		if (!this.browser) {
-			return;
+		if (this.context) {
+			await this.context.close();
+			this.context = null;
 		}
 
-		await this.browser.close();
-		this.browser = null;
+		if (this.browser) {
+			await this.browser.close();
+			this.browser = null;
+		}
 	}
 
 	async Login() {
 		await this.Initialize();
-		const page = await this.browser.newPage();
+		const page = await this.context.newPage();
 
 		await page.goto('https://platform.easyequities.io/Account/SignIn');
+		await page.waitForLoadState('load');
 
 		await page.waitForSelector("form#loginForm");
 
 		await page.waitForSelector("input#user-identifier-input");
-		await page.type("input#user-identifier-input", this.authentication.username);
+		await page.fill("input#user-identifier-input", this.authentication.username);
 
 		await page.waitForSelector("input#Password");
-		await page.type("input#Password", this.authentication.password);
+		await page.fill("input#Password", this.authentication.password);
 
 		const loginUrl = page.url();
 
 		await page.click("button#SignIn");
 
-		await page.waitForNavigation({ waitUntil: 'networkidle0' });
+		await page.waitForLoadState('load');
 
 		const newUrl = page.url();
 
@@ -75,17 +80,15 @@ class EasyEquities {
 
 	async GetHoldings(accountID) {
 		await this.Initialize();
-		const page = await this.browser.newPage();
+		const page = await this.context.newPage();
 
 		await page.goto("https://platform.easyequities.io/AccountOverview");
+		await page.waitForLoadState('load');
 
-		const accountTab = `div[data-id='${accountID}']`;
-		await page.waitForSelector(accountTab);
-		await page.click(accountTab);
-		await page.waitForNetworkIdle();
+		await page.click(`div[data-id='${accountID}']`);
+		await page.waitForLoadState('load');
 
-		await page.waitForSelector("button#loadHoldings");
-		await page.click("button#loadHoldings");
+		await page.locator("button#loadHoldings").click();
 
 		const tableDisplaySelector = "div.table-display > div#holding-body-table-positioning";
 		await page.waitForSelector(tableDisplaySelector);
@@ -129,14 +132,13 @@ class EasyEquities {
 
 	async GetBalance(accountID) {
 		await this.Initialize();
-		const page = await this.browser.newPage();
+		const page = await this.context.newPage();
 
 		await page.goto("https://platform.easyequities.io/AccountOverview");
+		await page.waitForLoadState('load');
 
-		const accountTab = `div[data-id='${accountID}']`;
-		await page.waitForSelector(accountTab);
-		await page.click(accountTab);
-		await page.waitForNetworkIdle();
+		await page.click(`div[data-id='${accountID}']`);
+		await page.waitForLoadState('load');
 
 		const availableFundsSelector = `div[data-id='${accountID}'] > div.funds-to-invest`;
 		await page.waitForSelector(availableFundsSelector);
@@ -148,30 +150,32 @@ class EasyEquities {
 
 	async Buy(accountID, holding, amount) {
 		await this.Initialize();
-		const page = await this.browser.newPage();
+		const page = await this.context.newPage();
 
 		await page.goto("https://platform.easyequities.io/AccountOverview");
+		await page.waitForLoadState('load');
 
 		const accountTab = `div[data-id='${accountID}']`;
 		await page.waitForSelector(accountTab);
 		await page.click(accountTab);
-		await page.waitForNetworkIdle();
+		await page.waitForLoadState('load');
 
 		await page.goto("https://platform.easyequities.io/ValueAllocation/Buy?contractCode=" + holding);
+		await page.waitForLoadState('load');
 
 		const amountInputSelector = "input#js-value-amount";
 		await page.waitForSelector(amountInputSelector);
-		await page.type(amountInputSelector, amount.toString());
+		await page.fill(amountInputSelector, amount.toString());
 
 		const performTradeSelector = "div[data-bind*=performTradeOperation]";
 		await page.waitForSelector(performTradeSelector);
 
 		await page.click(performTradeSelector);
-		await page.waitForNetworkIdle();
+		await page.waitForLoadState('load');
 		await page.waitForSelector(performTradeSelector);
 		await page.click(performTradeSelector);
 
-		await page.waitForNavigation({ waitUntil: 'networkidle0' });
+		await page.waitForLoadState('load');
 		const newUrl = page.url();
 
 		page.close();
@@ -180,42 +184,43 @@ class EasyEquities {
 
 	async Transfer(fromAccount, toAccount, fromAmount) {
 		await this.Initialize();
-		const page = await this.browser.newPage();
+		const page = await this.context.newPage();
 
 		await page.goto("https://platform.easyequities.io/FundTransfer/Transfer");
+		await page.waitForLoadState('load');
 
-		await page.waitForNetworkIdle();
+		await page.waitForLoadState('load');
 
 		const sourceSelector = "select#SourceTrustAccountId";
 		await page.waitForSelector(sourceSelector);
 		await page.select(sourceSelector, fromAccount);
 
-		await page.waitForNetworkIdle();
+		await page.waitForLoadState('load');
 
 		const destinationSelector = "select#DestinationTrustAccountId";
 		await page.waitForSelector(destinationSelector);
 		await page.select(destinationSelector, toAccount);
 
-		await page.waitForNetworkIdle();
+		await page.waitForLoadState('load');
 
 		const transferAmountSelector = "input#TransferAmount";
 		await page.waitForSelector(transferAmountSelector);
-		await page.type(transferAmountSelector, fromAmount.toString());
+		await page.fill(transferAmountSelector, fromAmount.toString());
 
-		await page.waitForNetworkIdle();
+		await page.waitForLoadState('load');
 
 		const agreementSelector = "input#Agreements_0__Checked";
 		await page.waitForSelector(agreementSelector);
 		await page.click(agreementSelector);
 
-		await page.waitForNetworkIdle();
+		await page.waitForLoadState('load');
 
 		const transferButtonSelector = "button[type='submit']";
 		await page.waitForSelector(transferButtonSelector);
 		await page.click(transferButtonSelector);
 
 		try {
-			await page.waitForNavigation({ waitUntil: 'networkidle0' });
+			await page.waitForLoadState('load');
 		} catch (error) {
 			return false;
 		}
