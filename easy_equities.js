@@ -114,35 +114,24 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-
-				const holdingButtonSelector = "button#loadHoldings";
-				await page.waitForSelector(holdingButtonSelector);
-				await page.click(holdingButtonSelector);
-
-				const tableDisplaySelector = "div.table-display > div#holding-body-table-positioning";
-				await page.waitForSelector(tableDisplaySelector);
-
-				const tableDisplays = await page.$$(tableDisplaySelector);
+				await page.locator("button#loadHoldings").click();
 
 				const holdings = [];
 
-				for (const tableDisplay of tableDisplays) {
-
-					const holdingCellSelector = "div.img-stocks-container > img";
-					const purchaseCellSelector = "div.purchase-value-cell > span";
-					const currentCellSelector = "div.current-value-cell > span";
-					const tableRowSelector = "div.content-box-description > div.row > div > div.content-box > div.row"
-					const tableRowValueSelector = tableRowSelector + " >  div.bold-heavy";
-
+				await page.locator("div.holdings-group.table-display").waitFor();
+				for (const tableDisplay of await page.locator("div.table-display > div#holding-body-table-positioning").all()) {
 					// Expand for more information
 					tableDisplay.click();
-					const tableRowContentSelector = "div.content-box-description > div.row > div > div.content-box > div.row";
-					await tableDisplay.waitForSelector(tableRowContentSelector);
 
-					const holdingValue = await tableDisplay.$eval(holdingCellSelector, element => element.getAttribute('src'));
-					const purchaseValue = await tableDisplay.$eval(purchaseCellSelector, element => element.textContent);
-					const currentValue = await tableDisplay.$eval(currentCellSelector, element => element.textContent);
-					const tableValues = await tableDisplay.$$eval(tableRowValueSelector, elements => elements.map(element => element.textContent));
+					const holdingValue = await tableDisplay.locator("div.img-stocks-container > img").getAttribute('src');
+					const purchaseValue = await tableDisplay.locator("div.purchase-value-cell > span").textContent();
+					const currentValue = await tableDisplay.locator("div.current-value-cell > span").textContent();
+
+					await tableDisplay.locator("div.content-box-description").waitFor();
+					const detailsTable = await tableDisplay.locator("div.content-box-description > div.row > div > div.content-box > div.row").all();
+					const tableValues = await Promise.all(
+						detailsTable.map(row => row.locator("div.bold-heavy").textContent())
+					);
 
 					const info = {
 						symbol: path.basename(holdingValue).split('.')[2],
