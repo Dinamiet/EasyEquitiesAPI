@@ -193,10 +193,16 @@ class EasyEquities {
 
 				await page.locator(performTradeSelector).click();
 
-				const newUrl = page.url();
+				try {
+					await page.waitForURL(/.+BuyInstruction/);
+				}
+				catch {
+					page.close();
+					return false;
+				}
 
 				page.close();
-				return newUrl.includes("BuyInstruction");
+				return true;
 			} catch (error) {
 				retries--;
 				console.log("Something went wrong, retrying...");
