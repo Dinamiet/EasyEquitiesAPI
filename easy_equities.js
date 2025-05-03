@@ -250,44 +250,30 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				await page.waitForLoadState('load');
-
 				const sourceSelector = "select#SourceTrustAccountId";
-				await page.waitForSelector(sourceSelector);
-				await page.select(sourceSelector, fromAccount);
-
-				await page.waitForLoadState('load');
+				await page.waitForSelector(sourceSelector, { state: 'attached' });
+				await page.selectOption(sourceSelector, fromAccount, { force: true });
 
 				const destinationSelector = "select#DestinationTrustAccountId";
-				await page.waitForSelector(destinationSelector);
-				await page.select(destinationSelector, toAccount);
-
-				await page.waitForLoadState('load');
+				await page.waitForSelector(destinationSelector, { state: 'attached' });
+				await page.selectOption(destinationSelector, toAccount, { force: true });
 
 				const transferAmountSelector = "input#TransferAmount";
 				await page.waitForSelector(transferAmountSelector);
 				await page.fill(transferAmountSelector, fromAmount.toString());
 
-				await page.waitForLoadState('load');
-
 				const agreementSelector = "input#Agreements_0__Checked";
 				await page.waitForSelector(agreementSelector);
 				await page.click(agreementSelector);
-
-				await page.waitForLoadState('load');
 
 				const transferButtonSelector = "button[type='submit']";
 				await page.waitForSelector(transferButtonSelector);
 				await page.click(transferButtonSelector);
 
-				try {
-					await page.waitForLoadState('load');
-				} catch (error) {
-					return false;
-				}
-
 				const newUrl = page.url();
+
 				page.close();
+
 				return newUrl.includes("successfully");
 			} catch (error) {
 				retries--;
