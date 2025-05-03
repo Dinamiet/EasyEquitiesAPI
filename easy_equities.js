@@ -196,21 +196,14 @@ class EasyEquities {
 		while (retries > 0) {
 			try {
 				await page.goto("https://platform.easyequities.io/ValueAllocation/Buy?contractCode=" + holding);
-				await page.waitForLoadState('load');
 
-				const amountInputSelector = "input#js-value-amount";
-				await page.waitForSelector(amountInputSelector);
-				await page.fill(amountInputSelector, amount.toString());
+				await page.locator("input#js-value-amount").fill(amount.toString());
 
 				const performTradeSelector = "div[data-bind*=performTradeOperation]";
-				await page.waitForSelector(performTradeSelector);
-				await page.click(performTradeSelector);
+				await page.locator(performTradeSelector).click();
 
-				await page.waitForLoadState('load');
-				await page.waitForSelector(performTradeSelector);
-				await page.click(performTradeSelector);
+				await page.locator(performTradeSelector).click();
 
-				await page.waitForLoadState('load');
 				const newUrl = page.url();
 
 				page.close();
