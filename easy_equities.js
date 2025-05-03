@@ -71,6 +71,7 @@ class EasyEquities {
 				const newUrl = page.url();
 
 				page.close();
+
 				return !newUrl.startsWith(loginUrl);
 			} catch (error) {
 				retries--;
@@ -90,19 +91,13 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				const currentAccountSelector = "h3 > span.bold-heavy";
-				await page.waitForSelector(currentAccountSelector);
-				const selectedAccount = await page.$eval(currentAccountSelector, element => element.textContent);
+				const selectedAccount = await page.locator("h3 > span.bold-heavy").evaluate(element => element.textContent);
 				if (selectedAccount.includes(accountID))
 					return page;
 
-				const accountSwitchSelector = `div[data-id='${accountID}']#selector-tab`;
-				await page.waitForSelector(accountSwitchSelector);
-				await page.click(accountSwitchSelector);
+				await page.locator(`div[data-id='${accountID}']#selector-tab`).click();
 
-				const accountLoadedSelector = `div[data-id='${accountID}']#trustaccount-slider`;
-				await page.waitForSelector(accountLoadedSelector);
-
+				await page.locator(`div[data-id='${accountID}']#trustaccount-slider`).waitFor();
 			} catch (error) {
 				retries--;
 				console.log("Something went wrong, retrying...");
