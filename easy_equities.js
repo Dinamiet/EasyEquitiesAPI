@@ -174,9 +174,7 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				const availableFundsSelector = `div[data-id='${accountID}'] > div.funds-to-invest > div.bold-heavy`;
-				await page.waitForSelector(availableFundsSelector);
-				const availableFunds = await page.$eval(availableFundsSelector, element => element.textContent);
+				const availableFunds = await page.locator(`div[data-id='${accountID}'] > div.funds-to-invest > div.bold-heavy`).evaluate(element => element.textContent);
 
 				page.close();
 
