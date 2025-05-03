@@ -90,7 +90,7 @@ class EasyEquities {
 		}
 	}
 
-	async GetHoldings(accountID) {
+	async SelectAccount(accountID) {
 		await this.Initialize();
 		const page = await this.context.newPage();
 
@@ -101,16 +101,36 @@ class EasyEquities {
 			try {
 				await page.waitForLoadState('load');
 
+				await page.waitForSelector(`div[data-id='${accountID}']`);
 				await page.click(`div[data-id='${accountID}']`);
 				await page.waitForLoadState('load');
 
 				const currentAccountSelector = "h3 > span.bold-heavy";
 				await page.waitForSelector(currentAccountSelector);
 				const selectedAccount = await page.$eval(currentAccountSelector, element => element.textContent);
-				if (!selectedAccount.includes(accountID))
-					continue;
+				if (selectedAccount.includes(accountID))
+					return page;
 
-				await page.locator("button#loadHoldings").click();
+			} catch (error) {
+				retries--;
+				console.log("Something went wrong, retrying...");
+				if (retries === 0)
+					throw new Error(`Failed to get holdings for ${accountID} after ${this.maxRetries} retries: ${error.message}`);
+			}
+		}
+	}
+
+	async GetHoldings(accountID) {
+		await this.Initialize();
+		const page = await this.SelectAccount(accountID);
+
+		let retries = this.maxRetries;
+		while (retries > 0) {
+			try {
+
+				const holdingButtonSelector = "button#loadHoldings";
+				await page.waitForSelector(holdingButtonSelector);
+				await page.click(holdingButtonSelector);
 
 				const tableDisplaySelector = "div.table-display > div#holding-body-table-positioning";
 				await page.waitForSelector(tableDisplaySelector);
@@ -149,6 +169,7 @@ class EasyEquities {
 				}
 
 				page.close();
+
 				return holdings;
 			} catch (error) {
 				retries--;
@@ -161,28 +182,16 @@ class EasyEquities {
 
 	async GetBalance(accountID) {
 		await this.Initialize();
-		const page = await this.context.newPage();
-
-		await page.goto("https://platform.easyequities.io/AccountOverview");
+		const page = await this.SelectAccount(accountID);
 
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				await page.waitForLoadState('load');
-
-				await page.click(`div[data-id='${accountID}']`);
-				await page.waitForLoadState('load');
-
-				const currentAccountSelector = "h3 > span.bold-heavy";
-				await page.waitForSelector(currentAccountSelector);
-				const selectedAccount = await page.$eval(currentAccountSelector, element => element.textContent);
-				if (!selectedAccount.includes(accountID))
-					continue;
-
 				const availableFundsSelector = `div[data-id='${accountID}'] > div.funds-to-invest`;
 				const availableFunds = await page.locator(availableFundsSelector).textContent();
 
 				page.close();
+
 				return extractNumber(availableFunds);
 			} catch (error) {
 				retries--;
@@ -195,26 +204,11 @@ class EasyEquities {
 
 	async Buy(accountID, holding, amount) {
 		await this.Initialize();
-		const page = await this.context.newPage();
-
-		await page.goto("https://platform.easyequities.io/AccountOverview");
+		const page = await this.SelectAccount(accountID);
 
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				await page.waitForLoadState('load');
-
-				const accountTab = `div[data-id='${accountID}']`;
-				await page.waitForSelector(accountTab);
-				await page.click(accountTab);
-				await page.waitForLoadState('load');
-
-				const currentAccountSelector = "h3 > span.bold-heavy";
-				await page.waitForSelector(currentAccountSelector);
-				const selectedAccount = await page.$eval(currentAccountSelector, element => element.textContent);
-				if (!selectedAccount.includes(accountID))
-					continue;
-
 				await page.goto("https://platform.easyequities.io/ValueAllocation/Buy?contractCode=" + holding);
 				await page.waitForLoadState('load');
 
@@ -234,6 +228,7 @@ class EasyEquities {
 				const newUrl = page.url();
 
 				page.close();
+
 				return newUrl.includes("BuyInstruction");
 			} catch (error) {
 				retries--;
