@@ -227,25 +227,14 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				const sourceSelector = "select#SourceTrustAccountId";
-				await page.waitForSelector(sourceSelector, { state: 'attached' });
-				await page.selectOption(sourceSelector, fromAccount, { force: true });
+				await page.locator("select#SourceTrustAccountId").selectOption(fromAccount, { force: true });
+				await page.locator("select#DestinationTrustAccountId").selectOption(toAccount, { force: true });
 
-				const destinationSelector = "select#DestinationTrustAccountId";
-				await page.waitForSelector(destinationSelector, { state: 'attached' });
-				await page.selectOption(destinationSelector, toAccount, { force: true });
+				await page.locator("input#TransferAmount").fill(fromAmount.toString());
 
-				const transferAmountSelector = "input#TransferAmount";
-				await page.waitForSelector(transferAmountSelector);
-				await page.fill(transferAmountSelector, fromAmount.toString());
+				await page.locator("input#Agreements_0__Checked").click();
 
-				const agreementSelector = "input#Agreements_0__Checked";
-				await page.waitForSelector(agreementSelector);
-				await page.click(agreementSelector);
-
-				const transferButtonSelector = "button[type='submit']";
-				await page.waitForSelector(transferButtonSelector);
-				await page.click(transferButtonSelector);
+				await page.locator("button[type='submit']").click();
 
 				const newUrl = page.url();
 
