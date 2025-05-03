@@ -64,15 +64,17 @@ class EasyEquities {
 				await page.locator("input#user-identifier-input").fill(this.authentication.username);
 				await page.locator("input#Password").fill(this.authentication.password);
 
-				const loginUrl = page.url();
-
 				await page.locator("button#SignIn").click();
 
-				const newUrl = page.url();
+				try {
+					await page.waitForURL(/.+portfolio-overview.+/);
+				} catch {
+					page.close();
+					return false;
+				}
 
 				page.close();
-
-				return !newUrl.startsWith(loginUrl);
+				return true;
 			} catch (error) {
 				retries--;
 				console.log("Something went wrong, retrying...");
@@ -145,7 +147,6 @@ class EasyEquities {
 				}
 
 				page.close();
-
 				return holdings;
 			} catch (error) {
 				retries--;
@@ -166,7 +167,6 @@ class EasyEquities {
 				const availableFunds = await page.locator(`div[data-id='${accountID}'] > div.funds-to-invest > div.bold-heavy`).evaluate(element => element.textContent);
 
 				page.close();
-
 				return extractNumber(availableFunds);
 			} catch (error) {
 				retries--;
@@ -196,7 +196,6 @@ class EasyEquities {
 				const newUrl = page.url();
 
 				page.close();
-
 				return newUrl.includes("BuyInstruction");
 			} catch (error) {
 				retries--;
@@ -225,11 +224,16 @@ class EasyEquities {
 
 				await page.locator("button[type='submit']").click();
 
-				const newUrl = page.url();
+				try {
+					await page.waitForURL(/.+FundTransfer.+successfully.+/);
+				}
+				catch {
+					page.close();
+					return false;
+				}
 
 				page.close();
-
-				return newUrl.includes("successfully");
+				return true;
 			} catch (error) {
 				retries--;
 				console.log("Something went wrong, retrying...");
