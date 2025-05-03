@@ -61,26 +61,20 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				await page.waitForLoadState('load');
+				await page.locator("input#user-identifier-input").fill(this.authentication.username);
+				await page.locator("input#Password").fill(this.authentication.password);
 
-				await page.waitForSelector("form#loginForm");
+				await page.locator("button#SignIn").click();
 
-				await page.waitForSelector("input#user-identifier-input");
-				await page.fill("input#user-identifier-input", this.authentication.username);
-
-				await page.waitForSelector("input#Password");
-				await page.fill("input#Password", this.authentication.password);
-
-				const loginUrl = page.url();
-
-				await page.click("button#SignIn");
-
-				await page.waitForLoadState('load');
-
-				const newUrl = page.url();
+				try {
+					await page.waitForURL(/.+portfolio-overview.+/);
+				} catch {
+					page.close();
+					return false;
+				}
 
 				page.close();
-				return !newUrl.startsWith(loginUrl);
+				return true;
 			} catch (error) {
 				retries--;
 				console.log("Something went wrong, retrying...");
@@ -99,18 +93,13 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				await page.waitForLoadState('load');
-
-				await page.waitForSelector(`div[data-id='${accountID}']`);
-				await page.click(`div[data-id='${accountID}']`);
-				await page.waitForLoadState('load');
-
-				const currentAccountSelector = "h3 > span.bold-heavy";
-				await page.waitForSelector(currentAccountSelector);
-				const selectedAccount = await page.$eval(currentAccountSelector, element => element.textContent);
+				const selectedAccount = await page.locator("h3 > span.bold-heavy").evaluate(element => element.textContent);
 				if (selectedAccount.includes(accountID))
 					return page;
 
+				await page.locator(`div[data-id='${accountID}']#selector-tab`).click();
+
+				await page.locator(`div[data-id='${accountID}']#trustaccount-slider`).waitFor();
 			} catch (error) {
 				retries--;
 				console.log("Something went wrong, retrying...");
@@ -127,35 +116,24 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-
-				const holdingButtonSelector = "button#loadHoldings";
-				await page.waitForSelector(holdingButtonSelector);
-				await page.click(holdingButtonSelector);
-
-				const tableDisplaySelector = "div.table-display > div#holding-body-table-positioning";
-				await page.waitForSelector(tableDisplaySelector);
-
-				const tableDisplays = await page.$$(tableDisplaySelector);
+				await page.locator("button#loadHoldings").click();
 
 				const holdings = [];
 
-				for (const tableDisplay of tableDisplays) {
-
-					const holdingCellSelector = "div.img-stocks-container > img";
-					const purchaseCellSelector = "div.purchase-value-cell > span";
-					const currentCellSelector = "div.current-value-cell > span";
-					const tableRowSelector = "div.content-box-description > div.row > div > div.content-box > div.row"
-					const tableRowValueSelector = tableRowSelector + " >  div.bold-heavy";
-
+				await page.locator("div.holdings-group.table-display").waitFor();
+				for (const tableDisplay of await page.locator("div.table-display > div#holding-body-table-positioning").all()) {
 					// Expand for more information
 					tableDisplay.click();
-					const tableRowContentSelector = "div.content-box-description > div.row > div > div.content-box > div.row";
-					await tableDisplay.waitForSelector(tableRowContentSelector);
 
-					const holdingValue = await tableDisplay.$eval(holdingCellSelector, element => element.getAttribute('src'));
-					const purchaseValue = await tableDisplay.$eval(purchaseCellSelector, element => element.textContent);
-					const currentValue = await tableDisplay.$eval(currentCellSelector, element => element.textContent);
-					const tableValues = await tableDisplay.$$eval(tableRowValueSelector, elements => elements.map(element => element.textContent));
+					const holdingValue = await tableDisplay.locator("div.img-stocks-container > img").getAttribute('src');
+					const purchaseValue = await tableDisplay.locator("div.purchase-value-cell > span").textContent();
+					const currentValue = await tableDisplay.locator("div.current-value-cell > span").textContent();
+
+					await tableDisplay.locator("div.content-box-description").waitFor();
+					const detailsTable = await tableDisplay.locator("div.content-box-description > div.row > div > div.content-box > div.row").all();
+					const tableValues = await Promise.all(
+						detailsTable.map(row => row.locator("div.bold-heavy").textContent())
+					);
 
 					const info = {
 						symbol: path.basename(holdingValue).split('.')[2],
@@ -169,7 +147,6 @@ class EasyEquities {
 				}
 
 				page.close();
-
 				return holdings;
 			} catch (error) {
 				retries--;
@@ -187,11 +164,9 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				const availableFundsSelector = `div[data-id='${accountID}'] > div.funds-to-invest`;
-				const availableFunds = await page.locator(availableFundsSelector).textContent();
+				const availableFunds = await page.locator(`div[data-id='${accountID}'] > div.funds-to-invest > div.bold-heavy`).evaluate(element => element.textContent);
 
 				page.close();
-
 				return extractNumber(availableFunds);
 			} catch (error) {
 				retries--;
@@ -210,25 +185,17 @@ class EasyEquities {
 		while (retries > 0) {
 			try {
 				await page.goto("https://platform.easyequities.io/ValueAllocation/Buy?contractCode=" + holding);
-				await page.waitForLoadState('load');
 
-				const amountInputSelector = "input#js-value-amount";
-				await page.waitForSelector(amountInputSelector);
-				await page.fill(amountInputSelector, amount.toString());
+				await page.locator("input#js-value-amount").fill(amount.toString());
 
 				const performTradeSelector = "div[data-bind*=performTradeOperation]";
-				await page.waitForSelector(performTradeSelector);
+				await page.locator(performTradeSelector).click();
 
-				await page.click(performTradeSelector);
-				await page.waitForLoadState('load');
-				await page.waitForSelector(performTradeSelector);
-				await page.click(performTradeSelector);
+				await page.locator(performTradeSelector).click();
 
-				await page.waitForLoadState('load');
 				const newUrl = page.url();
 
 				page.close();
-
 				return newUrl.includes("BuyInstruction");
 			} catch (error) {
 				retries--;
@@ -248,45 +215,25 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				await page.waitForLoadState('load');
+				await page.locator("select#SourceTrustAccountId").selectOption(fromAccount, { force: true });
+				await page.locator("select#DestinationTrustAccountId").selectOption(toAccount, { force: true });
 
-				const sourceSelector = "select#SourceTrustAccountId";
-				await page.waitForSelector(sourceSelector);
-				await page.select(sourceSelector, fromAccount);
+				await page.locator("input#TransferAmount").fill(fromAmount.toString());
 
-				await page.waitForLoadState('load');
+				await page.locator("input#Agreements_0__Checked").click();
 
-				const destinationSelector = "select#DestinationTrustAccountId";
-				await page.waitForSelector(destinationSelector);
-				await page.select(destinationSelector, toAccount);
-
-				await page.waitForLoadState('load');
-
-				const transferAmountSelector = "input#TransferAmount";
-				await page.waitForSelector(transferAmountSelector);
-				await page.fill(transferAmountSelector, fromAmount.toString());
-
-				await page.waitForLoadState('load');
-
-				const agreementSelector = "input#Agreements_0__Checked";
-				await page.waitForSelector(agreementSelector);
-				await page.click(agreementSelector);
-
-				await page.waitForLoadState('load');
-
-				const transferButtonSelector = "button[type='submit']";
-				await page.waitForSelector(transferButtonSelector);
-				await page.click(transferButtonSelector);
+				await page.locator("button[type='submit']").click();
 
 				try {
-					await page.waitForLoadState('load');
-				} catch (error) {
+					await page.waitForURL(/.+FundTransfer.+successfully.+/);
+				}
+				catch {
+					page.close();
 					return false;
 				}
 
-				const newUrl = page.url();
 				page.close();
-				return newUrl.includes("successfully");
+				return true;
 			} catch (error) {
 				retries--;
 				console.log("Something went wrong, retrying...");
