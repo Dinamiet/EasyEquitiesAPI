@@ -99,17 +99,18 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				await page.waitForLoadState('load');
-
-				await page.waitForSelector(`div[data-id='${accountID}']`);
-				await page.click(`div[data-id='${accountID}']`);
-				await page.waitForLoadState('load');
-
 				const currentAccountSelector = "h3 > span.bold-heavy";
 				await page.waitForSelector(currentAccountSelector);
 				const selectedAccount = await page.$eval(currentAccountSelector, element => element.textContent);
 				if (selectedAccount.includes(accountID))
 					return page;
+
+				const accountSwitchSelector = `div[data-id='${accountID}']#selector-tab`;
+				await page.waitForSelector(accountSwitchSelector);
+				await page.click(accountSwitchSelector);
+
+				const accountLoadedSelector = `div[data-id='${accountID}']#trustaccount-slider`;
+				await page.waitForSelector(accountLoadedSelector);
 
 			} catch (error) {
 				retries--;
@@ -187,8 +188,9 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				const availableFundsSelector = `div[data-id='${accountID}'] > div.funds-to-invest`;
-				const availableFunds = await page.locator(availableFundsSelector).textContent();
+				const availableFundsSelector = `div[data-id='${accountID}'] > div.funds-to-invest > div.bold-heavy`;
+				await page.waitForSelector(availableFundsSelector);
+				const availableFunds = await page.$eval(availableFundsSelector, element => element.textContent);
 
 				page.close();
 
@@ -218,8 +220,8 @@ class EasyEquities {
 
 				const performTradeSelector = "div[data-bind*=performTradeOperation]";
 				await page.waitForSelector(performTradeSelector);
-
 				await page.click(performTradeSelector);
+
 				await page.waitForLoadState('load');
 				await page.waitForSelector(performTradeSelector);
 				await page.click(performTradeSelector);
