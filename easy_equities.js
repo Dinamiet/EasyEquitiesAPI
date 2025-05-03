@@ -61,21 +61,12 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				await page.waitForLoadState('load');
-
-				await page.waitForSelector("form#loginForm");
-
-				await page.waitForSelector("input#user-identifier-input");
-				await page.fill("input#user-identifier-input", this.authentication.username);
-
-				await page.waitForSelector("input#Password");
-				await page.fill("input#Password", this.authentication.password);
+				await page.locator("input#user-identifier-input").fill(this.authentication.username);
+				await page.locator("input#Password").fill(this.authentication.password);
 
 				const loginUrl = page.url();
 
-				await page.click("button#SignIn");
-
-				await page.waitForLoadState('load');
+				await page.locator("button#SignIn").click();
 
 				const newUrl = page.url();
 
