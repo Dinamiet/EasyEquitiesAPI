@@ -62,6 +62,7 @@ class EasyEquities {
 		while (retries > 0) {
 			try {
 				await page.locator("input#user-identifier-input").fill(this.authentication.username);
+				await page.locator("button#continueButton").click();
 				await page.locator("input#Password").fill(this.authentication.password);
 
 				await page.locator("button#SignIn").click();
