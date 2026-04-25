@@ -56,7 +56,7 @@ class EasyEquities {
 		await this.Initialize();
 		const page = await this.context.newPage();
 
-		await page.goto('https://platform.easyequities.io/Account/SignIn');
+		await page.goto('https://portfolio-overview.apps.easyequities.io/');
 
 		let retries = this.maxRetries;
 		while (retries > 0) {
