@@ -222,7 +222,10 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
+				await page.locator("select#SourceTrustAccountId option[value='" + fromAccount + "']").waitFor({ state: 'attached' });
 				await page.locator("select#SourceTrustAccountId").selectOption(fromAccount, { force: true });
+
+				await page.locator("select#DestinationTrustAccountId option[value='" + toAccount + "']").waitFor({ state: 'attached' });
 				await page.locator("select#DestinationTrustAccountId").selectOption(toAccount, { force: true });
 
 				await page.locator("input#TransferAmount").fill(fromAmount.toString());
