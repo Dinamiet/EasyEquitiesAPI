@@ -164,7 +164,8 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				const availableFunds = await page.locator(`div[data-id='${accountID}'] > div.funds-to-invest > div.bold-heavy`).evaluate(element => element.textContent);
+				await page.locator(`div#account-overview-valuation[aria-busy='false']`).waitFor({ state: 'attached' });
+				const availableFunds = await page.locator(`span[class*="funds-amount"]`).evaluate(element => element.textContent);
 
 				page.close();
 				return extractNumber(availableFunds);
