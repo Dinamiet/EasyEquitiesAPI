@@ -116,27 +116,35 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				await page.locator("button#loadHoldings").click();
-
 				const holdings = [];
 
-				await page.locator("div.holdings-group.table-display").waitFor();
-				for (const tableDisplay of await page.locator("div.table-display > div#holding-body-table-positioning").all()) {
+				await page.locator("table[class*='hold']").waitFor();
+				const holdingRows = await page.locator("table[class*='hold'] > tbody[class*='item']").all();
+				for (const tableDisplay of holdingRows) {
 					// Expand for more information
 					tableDisplay.click();
 
-					const holdingValue = await tableDisplay.locator("div.img-stocks-container > img").getAttribute('src');
-					const purchaseValue = await tableDisplay.locator("div.purchase-value-cell > span").textContent();
-					const currentValue = await tableDisplay.locator("div.current-value-cell > span").textContent();
+					const holding = tableDisplay.locator("span[class*='meta']");
 
-					await tableDisplay.locator("div.content-box-description").waitFor();
-					const detailsTable = await tableDisplay.locator("div.content-box-description > div.row > div > div.content-box > div.row").all();
+					const holdingSymbol = await holding.evaluate(element => element.textContent);
+
+					await holding.click();
+
+					const holdingTableColumns = await tableDisplay.locator("td[class*='hold__value']").all();
+					const holdingTableValues = await Promise.all(
+						holdingTableColumns.map(row => row.locator('span').textContent())
+					);
+					const purchaseValue = holdingTableValues[0];
+					const currentValue = holdingTableValues[1];
+
+					await tableDisplay.locator("div[class*='stats'] > dd").first().waitFor({ state: 'attached' });
+					const detailsTable = await tableDisplay.locator("div[class*='stats'] > dd").all();
 					const tableValues = await Promise.all(
-						detailsTable.map(row => row.locator("div.bold-heavy").textContent())
+						detailsTable.map(row => row.textContent())
 					);
 
 					const info = {
-						symbol: path.basename(holdingValue).split('.')[2],
+						symbol: path.basename(holdingSymbol).split(' ')[0],
 						purchaseValue: extractNumber(purchaseValue),
 						currentValue: extractNumber(currentValue),
 						shares: extractNumber(tableValues[0]) + extractNumber(tableValues[1]),
