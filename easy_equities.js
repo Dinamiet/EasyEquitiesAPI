@@ -94,18 +94,17 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				const selectedAccount = await page.locator("h3 > span.bold-heavy").evaluate(element => element.textContent);
+				await page.locator(`button[data-id='${accountID}']`).click();
+
+				const selectedAccount = await page.locator(`span.ep-ao-intro__number-value`).evaluate(element => element.textContent);
 				if (selectedAccount.includes(accountID))
 					return page;
 
-				await page.locator(`div[data-id='${accountID}']#selector-tab`).click();
-
-				await page.locator(`div[data-id='${accountID}']#trustaccount-slider`).waitFor();
 			} catch (error) {
 				retries--;
 				console.log("Something went wrong, retrying...");
 				if (retries === 0)
-					throw new Error(`Failed to get holdings for ${accountID} after ${this.maxRetries} retries: ${error.message}`);
+					throw new Error(`Failed to select account for ${accountID} after ${this.maxRetries} retries: ${error.message}`);
 			}
 		}
 	}
@@ -117,27 +116,35 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				await page.locator("button#loadHoldings").click();
-
 				const holdings = [];
 
-				await page.locator("div.holdings-group.table-display").waitFor();
-				for (const tableDisplay of await page.locator("div.table-display > div#holding-body-table-positioning").all()) {
+				await page.locator("table[class*='hold']").waitFor();
+				const holdingRows = await page.locator("table[class*='hold'] > tbody[class*='item']").all();
+				for (const tableDisplay of holdingRows) {
 					// Expand for more information
 					tableDisplay.click();
 
-					const holdingValue = await tableDisplay.locator("div.img-stocks-container > img").getAttribute('src');
-					const purchaseValue = await tableDisplay.locator("div.purchase-value-cell > span").textContent();
-					const currentValue = await tableDisplay.locator("div.current-value-cell > span").textContent();
+					const holding = tableDisplay.locator("span[class*='meta']");
 
-					await tableDisplay.locator("div.content-box-description").waitFor();
-					const detailsTable = await tableDisplay.locator("div.content-box-description > div.row > div > div.content-box > div.row").all();
+					const holdingSymbol = await holding.evaluate(element => element.textContent);
+
+					await holding.click();
+
+					const holdingTableColumns = await tableDisplay.locator("td[class*='hold__value']").all();
+					const holdingTableValues = await Promise.all(
+						holdingTableColumns.map(row => row.locator('span').textContent())
+					);
+					const purchaseValue = holdingTableValues[0];
+					const currentValue = holdingTableValues[1];
+
+					await tableDisplay.locator("div[class*='stats'] > dd").first().waitFor({ state: 'attached' });
+					const detailsTable = await tableDisplay.locator("div[class*='stats'] > dd").all();
 					const tableValues = await Promise.all(
-						detailsTable.map(row => row.locator("div.bold-heavy").textContent())
+						detailsTable.map(row => row.textContent())
 					);
 
 					const info = {
-						symbol: path.basename(holdingValue).split('.')[2],
+						symbol: path.basename(holdingSymbol).split(' ')[0],
 						purchaseValue: extractNumber(purchaseValue),
 						currentValue: extractNumber(currentValue),
 						shares: extractNumber(tableValues[0]) + extractNumber(tableValues[1]),
@@ -165,7 +172,8 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				const availableFunds = await page.locator(`div[data-id='${accountID}'] > div.funds-to-invest > div.bold-heavy`).evaluate(element => element.textContent);
+				await page.locator(`div#account-overview-valuation[aria-busy='false']`).waitFor({ state: 'attached' });
+				const availableFunds = await page.locator(`span[class*="funds-amount"]`).evaluate(element => element.textContent);
 
 				page.close();
 				return extractNumber(availableFunds);
@@ -189,10 +197,7 @@ class EasyEquities {
 
 				await page.locator("input#js-value-amount").fill(amount.toString());
 
-				const performTradeSelector = "div[data-bind*=performTradeOperation]";
-				await page.locator(performTradeSelector).click();
-
-				await page.locator(performTradeSelector).click();
+				await page.locator("button[data-bind*=performTradeOperation]").click();
 
 				try {
 					await page.waitForURL(/.+BuyInstruction/);
@@ -227,6 +232,8 @@ class EasyEquities {
 
 				await page.locator("select#DestinationTrustAccountId option[value='" + toAccount + "']").waitFor({ state: 'attached' });
 				await page.locator("select#DestinationTrustAccountId").selectOption(toAccount, { force: true });
+
+				await page.waitForLoadState('networkidle');
 
 				await page.locator("input#TransferAmount").fill(fromAmount.toString());
 
