@@ -94,18 +94,17 @@ class EasyEquities {
 		let retries = this.maxRetries;
 		while (retries > 0) {
 			try {
-				const selectedAccount = await page.locator("h3 > span.bold-heavy").evaluate(element => element.textContent);
+				await page.locator(`button[data-id='${accountID}']`).click();
+
+				const selectedAccount = await page.locator(`span.ep-ao-intro__number-value`).evaluate(element => element.textContent);
 				if (selectedAccount.includes(accountID))
 					return page;
 
-				await page.locator(`div[data-id='${accountID}']#selector-tab`).click();
-
-				await page.locator(`div[data-id='${accountID}']#trustaccount-slider`).waitFor();
 			} catch (error) {
 				retries--;
 				console.log("Something went wrong, retrying...");
 				if (retries === 0)
-					throw new Error(`Failed to get holdings for ${accountID} after ${this.maxRetries} retries: ${error.message}`);
+					throw new Error(`Failed to select account for ${accountID} after ${this.maxRetries} retries: ${error.message}`);
 			}
 		}
 	}
