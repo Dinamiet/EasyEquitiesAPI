@@ -197,10 +197,7 @@ class EasyEquities {
 
 				await page.locator("input#js-value-amount").fill(amount.toString());
 
-				const performTradeSelector = "div[data-bind*=performTradeOperation]";
-				await page.locator(performTradeSelector).click();
-
-				await page.locator(performTradeSelector).click();
+				await page.locator("button[data-bind*=performTradeOperation]").click();
 
 				try {
 					await page.waitForURL(/.+BuyInstruction/);
