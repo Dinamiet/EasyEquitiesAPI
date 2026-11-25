@@ -233,6 +233,8 @@ class EasyEquities {
 				await page.locator("select#DestinationTrustAccountId option[value='" + toAccount + "']").waitFor({ state: 'attached' });
 				await page.locator("select#DestinationTrustAccountId").selectOption(toAccount, { force: true });
 
+				await page.waitForLoadState('networkidle');
+
 				await page.locator("input#TransferAmount").fill(fromAmount.toString());
 
 				await page.locator("input#Agreements_0__Checked").click();
